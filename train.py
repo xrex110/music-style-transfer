@@ -91,6 +91,7 @@ start = time.time()
 for epoch in range(1, num_epochs + 1):
     optimizer.zero_grad()
     a_G = model(a_G_var)
+    print(a_G.shape)
 
     content_loss = content_param * compute_content_loss(a_C, a_G)
     style_loss = style_param * compute_layer_style_loss(a_S, a_G)

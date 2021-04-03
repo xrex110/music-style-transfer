@@ -39,7 +39,7 @@ LOGGING_INTERVAL = 1
 #BATCH_SIZE = 32
 BATCH_SIZE = 1
 
-epochs = 30
+epochs = 3
 
 model = ESCModel3()
 if cuda:
@@ -136,7 +136,7 @@ for epoch in range(epochs):
 			x = x.cuda()
 			y = y.cuda()
 
-		yhat = model(x[:, :, :, None])
+		yhat = model(x[None, :, :, :])
 		loss = lossfx(yhat, y)
 		loss.backward()
 		batch_losses.append(loss.item())

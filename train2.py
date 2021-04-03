@@ -53,7 +53,7 @@ if cuda:
 print(f"Shape on style file is : {a_style_torch.shape}")
 
 model = ESCModel3()
-model.load_state_dict(torch.load("esc50-model.pt")) #Load weights
+model.load_state_dict(torch.load("esc50-model3.pt")) #Load weights
 print(f"Model used:")
 model.eval()
 
@@ -92,6 +92,7 @@ start = time.time()
 for epoch in range(1, num_epochs + 1):
     optimizer.zero_grad()
     a_G = model.feature_extractor(a_G_var)
+    print(a_G.shape)
 
     content_loss = content_param * compute_content_loss(a_C, a_G)
     style_loss = style_param * compute_layer_style_loss(a_S, a_G)
