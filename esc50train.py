@@ -32,7 +32,8 @@ else:
 
 print("Cuda", str(cuda))
 
-LOADED = False
+LOADED_LABELS = False
+LOADED_AUDIO = False
 LOGGING_INTERVAL = 1
 
 #BATCH_SIZE = 32
@@ -40,15 +41,28 @@ BATCH_SIZE = 1
 
 epochs = 60
 
-if os.path.exists("loaded_labels.p") and os.path.exists("loaded_spectograms.p"):
-	if os.path.getsize("loaded_labels.p") > 0 and os.path.getsize("loaded_spectograms.p") > 0:
-		# Comment this line out to force it to reload the files
-		LOADED = True
+model = ESCModel()
+if cuda:
+	model = model.cuda()
+optimizer = optim.Adam(model.parameters(), lr = 2e-5)
+lossfx = nn.CrossEntropyLoss()
+
+if os.path.exists("loaded_labels.p"):
+	if os.path.getsize("loaded_labels.p") > 0:
+		train_labels_T = pickle.load(open("train_labels.p", "rb"))
+		test_labels_T = pickle.load(open("test_labels.p", "rb"))
+		LOADED_LABELS = True
 		pass
 
-if not LOADED:
+if os.path.exists("loaded_spectograms.p"):
+	if os.path.getsize("loaded_spectograms.p") > 0:
+		train_data_T = pickle.load(open("train_spectograms.p", "rb"))
+		test_data_T = pickle.load(open("test_spectograms.p", "rb"))
+		LOADED_AUDIO = True
+		pass
 
-	print("Building Data Files")
+if not LOADED_LABELS:
+	print("Building Label Files")
 	files = os.listdir("../ESC-50/audio")
 
 	labels = []
@@ -57,54 +71,40 @@ if not LOADED:
 		print(f"list: {idx_list}")
 		print(f"filenmame: {files[i]}")
 		print(f"\tlabel is {idx_list[1]}")
-		'''
-		vect = np.zeros([50])
-		vect[int(idx_list[1])] = 1.0
-		labels.append(vect)
-		'''
+
 		labels.append(int(idx_list[1]))
 
-	pickle.dump(labels, open("loaded_labels.p", "wb"))
-	
+	train_labels = labels[0:1800]
+	test_labels = labels[1801:2000]
+
+	train_labels_T = torch.LongTensor(train_labels)
+	test_labels_T = torch.LongTensor(test_labels)
+
+	pickle.dump(train_labels_T, open("train_labels.p", "wb"))
+	pickle.dump(test_labels_T, open("test_labels.p", "wb"))
+
+	#pickle.dump(labels, open("loaded_labels.p", "wb"))
+
+if not LOADED_AUDIO:
+	print("Building Audio Files")
 	audio_data = []
 	for i in range(0, 2000):
 		audio, sr = wav2spectrum("../ESC-50/audio/" + files[i])
-		#print(f"Loaded {files[i]}")
+		print(f"Loaded {files[i]}")
 		audio_data.append(audio)
+	
+	train_data = audio_data[0:1800]
+	test_data = audio_data[1801:2000]
 
-	#print(f"type: {type(audio)}")
+	train_data_T = torch.Tensor(train_data)
+	test_data_T = torch.Tensor(test_data)
 
-	pickle.dump(audio_data, open("loaded_spectograms.p", "wb"))
-
-	#print("Files Built")
-
-else:
-	print("Loading Data Files")
-	with open("loaded_spectograms.p", "rb") as file:
-		audio_data = pickle.load(file)
-	with open("loaded_labels.p", "rb") as file:
-		labels = pickle.load(file)
-	print("Files Loaded")
+	pickle.dump(train_data_T, open("train_spectograms.p", "wb"))
+	pickle.dump(test_data_T, open("test_spectograms.p", "wb"))
 
 print("Building Datasets")
-train_data = audio_data[0:1800]
-train_labels = labels[0:1800]
-
-test_data = audio_data[1801:2000]
-test_labels = labels[1801:2000]
-
-model = ESCModel()
-if cuda:
-	model = model.cuda()
-optimizer = optim.Adam(model.parameters(), lr = 2e-5)
-lossfx = nn.CrossEntropyLoss()
 
 train_losses=[]
-
-train_data_T = torch.Tensor(train_data)
-train_labels_T = torch.LongTensor(train_labels)
-test_data_T = torch.Tensor(test_data)
-test_labels_T = torch.LongTensor(test_labels)
 
 trainDataset = TensorDataset(train_data_T, train_labels_T)
 testDataset = TensorDataset(test_data_T, test_labels_T)
@@ -112,7 +112,7 @@ testDataset = TensorDataset(test_data_T, test_labels_T)
 train_loader = DataLoader(trainDataset, batch_size = BATCH_SIZE)
 test_loader = DataLoader(testDataset, batch_size = BATCH_SIZE)
 
-print("Datasets Built. Begining Training")
+print("Datasets Built. Beginning Training")
 
 for epoch in range(epochs):
 	model.train()
@@ -140,3 +140,5 @@ for epoch in range(epochs):
 	batch_losses = []
 	preds = getPredictedValues(yhats)
 	print(f"Accuracy {accuracy(preds, ylabs)}")
+
+torch.save(model.state_dict(), "esc50-model.pt")
