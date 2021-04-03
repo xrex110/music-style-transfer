@@ -2,6 +2,7 @@ import librosa
 import numpy as np
 import torch
 from models import *
+import soundfile 
 
 def wav2spectrum(fname):
     x, sr = librosa.load(fname)
@@ -18,8 +19,9 @@ def spectrum2wav(spectrum, sr, outfile):
     for i in range(50):
         S = a * np.exp(1j * p)
         x = librosa.istft(S)
-        p = np.angle(librosa.stft(x, N_FFT))
-    librosa.output.write_wav(outfile, x, sr)
+        p = np.angle(librosa.stft(x, num_fft))
+    #librosa.output.write_wav(outfile, x, sr) # Depr
+    soundfile.write(outfile, x, sr)
 
 def compute_content_loss(a_C, a_G):
     """
