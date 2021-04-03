@@ -20,5 +20,7 @@ def changeOutputTempo(song, targetSong, sr):
     return outsong
 
 song = changeOutputTempo(nightcall, stairway, sr1)
+print(nightcall.shape, song.shape, stairway.shape)
 
-soundfile.write(song, sr1, "song.wav")
+#soundfile.write(song, sr1, "song.wav")
+soundfile.write("song.wav", song, sr1)

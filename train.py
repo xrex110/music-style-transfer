@@ -4,6 +4,11 @@ from models import *
 import time
 import math
 
+LOGGING_INTERVAL = 1000
+PRINTING_INTERVAL = 1
+
+PREPROCESS_STYLE_TEMPO = True
+
 cuda = False
 if torch.cuda.is_available():
     cuda = True
@@ -16,14 +21,21 @@ print(f"Using gpu: {cuda}")
 content_file = "input_stairway.wav"
 style_file = "input_nightcall.wav"
 
+content_wav, sr_content = librosa.load(content_file)
+if PREPROCESS_STYLE_TEMPO:
+    style_wav, sr_style = librosa.load(style_file)
+    paced_style_wav = changeOutputTempo(style_wav, content_wav, sr_style)
+else:
+    paced_style_wav, sr_style = librosa.load(style_file)
+
 style_param = 1
 content_param = 1e2 
 
 lr = 0.003
 num_epochs = 20000
 
-a_content, sr = wav2spectrum(content_file)
-a_style, sr = wav2spectrum(style_file)
+a_content, sr = fileToSpectrum(content_wav, sr_content)
+a_style, sr = fileToSpectrum(paced_style_wav, sr_style)
 
 a_content_torch = torch.from_numpy(a_content)[None, None, :, :]
 if cuda:
@@ -49,8 +61,6 @@ if cuda:
 a_C = model(a_C_var)
 a_S = model(a_S_var)
 
-
-
 a_G_var = Variable(torch.randn(a_content_torch.shape) * 1e-3)
 if cuda:
     a_G_var = a_G_var.cuda()
@@ -73,7 +83,6 @@ def timeSince(since):
 start = time.time()
 # Train the Model
 for epoch in range(1, num_epochs + 1):
-    print(f"Running epoch {epoch}")
     optimizer.zero_grad()
     a_G = model(a_G_var)
 
@@ -83,17 +92,17 @@ for epoch in range(1, num_epochs + 1):
     loss.backward()
     optimizer.step()
 
-    if epoch % 1000 == 0:
+    if epoch % PRINTING_INTERVAL == 0:
+        print(f"Running epoch {epoch}")
+        # print
+        print("\t{} {:.2f}% {} content_loss:{:.4f} style_loss:{:.4f} total_loss:{:.4f}".format(epoch,
+            epoch / num_epochs * 100, timeSince(start), content_loss.item(), style_loss.item(), loss.item()))
+
+    if epoch % LOGGING_INTERVAL == 0:
         gen_spectrum = a_G_var.cpu().data.numpy().squeeze()
-        gen_audio_C = "out" + str(epoch) + ".wav"
-        spectrum2wav(gen_spectrum, sr, gen_audio_C)    
-    
-    # print
-    print("\t{} {}% {} content_loss:{:4f} style_loss:{:4f} total_loss:{:4f}".format(epoch,
-                                                                                    epoch / num_epochs * 100,
-                                                                                    timeSince(start),
-                                                                                    content_loss.item(),
-                                                                                    style_loss.item(), loss.item()))
+        gen_audio_C = "out" + str(int(epoch / LOGGING_INTERVAL)) + ".wav"
+        spectrum2wav(gen_spectrum, sr, gen_audio_C)
+
     current_loss += loss.item()
 
 gen_spectrum = a_G_var.cpu().data.numpy().squeeze()

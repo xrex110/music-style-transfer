@@ -14,6 +14,13 @@ def wav2spectrum(fname):
     S = np.log1p(np.abs(S))
     return S, sr
 
+def fileToSpectrum(file, sr):
+    S = librosa.stft(file, num_fft)
+    p = np.angle(S)
+
+    S = np.log1p(np.abs(S))
+    return S, sr
+
 def spectrum2wav(spectrum, sr, outfile):
     # Return the all-zero vector with the same shape of `a_content`
     a = np.exp(spectrum) - 1
@@ -102,5 +109,7 @@ def compute_layer_style_loss(a_S, a_G):
 def changeOutputTempo(song, targetSong, sr):
     estimatedTempo = librosa.beat.tempo(song, sr)
     outputTempo = librosa.beat.tempo(targetSong, sr)
-    song = rb.change_tempo(song, sr, estimatedTempo, final_tempo)
-    return song
+    ratio = estimatedTempo / outputTempo
+    outsong = rb.time_stretch(song, sr, ratio)
+    newtempo = librosa.beat.tempo(outsong, sr)
+    return outsong

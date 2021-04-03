@@ -7,8 +7,30 @@ import re
 from models import ESCModel
 from utils import *
 import pickle
+import time
+
+from torch.utils.data import TensorDataset, DataLoader
+
+cuda = False
+if torch.cuda.is_available():
+    cuda = True
+else:
+    cuda = False
+
+print("Cuda", str(cuda))
 
 LOADED = False
+LOGGING_INTERVAL = 1
+
+BATCH_SIZE = 32
+
+epochs = 60
+
+if os.path.exists("loaded_labels.p") and os.path.exists("loaded_spectograms.p"):
+	if os.path.getsize("loaded_labels.p") > 0 and os.path.getsize("loaded_spectograms.p") > 0:
+		# Comment this line out to force it to reload the files
+		LOADED = True
+		pass
 
 if not LOADED:
 
@@ -48,12 +70,49 @@ test_data = audio[1801:2000]
 test_labels = labels[1801:2000]
 
 model = ESCModel()
+if cuda:
+	model = model.cuda()
 optimizer = optim.Adam(model.parameters(), lr = 2e-5)
-loss_fn = nn.CrossEntropyLoss()
+lossfx = nn.CrossEntropyLoss()
 
-epochs = 60
 train_losses=[]
 
+train_data_T = torch.Tensor(train_data)
+train_labels_T = torch.Tensor(train_labels)
+test_data_T = torch.Tensor(test_data)
+test_labels_T = torch.Tensor(test_labels)
+
+trainDataset = TensorDataset(train_data_T, train_labels_T)
+testDataset = TensorDataset(test_data_T, test_labels_T)
+
+train_loader = DataLoader(trainDataset, batch_size = BATCH_SIZE)
+test_loader = DataLoader(testDataset, batch_size = BATCH_SIZE)
+
+for epoch in range(epochs):
+	model.train()
+	batch_losses=[]
+
+	for index, traindata in enumerate(train_loader):
+		x, y = traindata
+		optimizer.zero_grad()
+		if cuda:
+			x = x.cuda()
+			y = y.cuda()
+
+		yhat = model(x)
+		loss = lossfx(yhat, y)
+		loss.backward()
+		batch_losses.append(loss.item())
+		optimizer.step()
+	train_losses.append(batch_losses)
+	print(f'Epoch - {epoch} Train-Loss : {np.mean(train_losses[-1])}')
+	model.eval()
+	batch_losses = []
+	#trace_y = []
+	#trace_yhat = []
+
+
+'''
 for epoch in range(epochs):
 	model.train()
 	x, y = train_data, train_labels
@@ -66,6 +125,21 @@ for epoch in range(epochs):
 	loss.backward()
 	train_losses.append(loss.item())
 	optimizer.step()
-	print(f"Epoch {epoch} Training Loss {loss.item()}")
+	acc = accuracy(getPredictedValues(yhat), y)
+	print(f"Epoch {epoch} Training Loss {loss.item()} Training Accuracy {acc}")
+'''
 
-	
+def getPredictedValues(yhat):
+	preds = []
+	for item in yhat:
+		ind = np.argmax(item)
+		new = np.zeros([50])
+		new[ind] = 1
+		preds.append(new)
+
+def accuracy(preds, labels):
+	correct = 0.0
+	for i in range(len(preds)):
+		if preds[i] == labels[i]:
+			correct += 1.0
+	return (0.0 + correct) / len(preds)
