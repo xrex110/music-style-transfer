@@ -11,6 +11,19 @@ import time
 
 from torch.utils.data import TensorDataset, DataLoader
 
+def getPredictedValues(yhat):
+	preds = []
+	for item in yhat:
+		preds.append(np.argmax(item))
+	return preds
+
+def accuracy(preds, labels):
+	correct = 0.0
+	for i in range(len(preds)):
+		if preds[i] == labels[i]:
+			correct += 1.0
+	return (0.0 + correct) / len(preds)
+
 cuda = False
 if torch.cuda.is_available():
     cuda = True
@@ -52,7 +65,7 @@ if not LOADED:
 		labels.append(int(idx_list[1]))
 
 	pickle.dump(labels, open("loaded_labels.p", "wb"))
-	'''
+	
 	audio_data = []
 	for i in range(0, 2000):
 		audio, sr = wav2spectrum("../ESC-50/audio/" + files[i])
@@ -61,7 +74,7 @@ if not LOADED:
 
 	#print(f"type: {type(audio)}")
 
-	pickle.dump(audio_data, open("loaded_spectograms.p", "wb"))'''
+	pickle.dump(audio_data, open("loaded_spectograms.p", "wb"))
 
 	#print("Files Built")
 
@@ -76,8 +89,6 @@ else:
 print("Building Datasets")
 train_data = audio_data[0:1800]
 train_labels = labels[0:1800]
-
-print(train_labels[0])
 
 test_data = audio_data[1801:2000]
 test_labels = labels[1801:2000]
@@ -105,10 +116,13 @@ print("Datasets Built. Begining Training")
 
 for epoch in range(epochs):
 	model.train()
-	batch_losses=[]
+	batch_losses = []
+	yhats = []
+	ylabs = []
 
 	for index, traindata in enumerate(train_loader):
 		x, y = traindata
+		ylabs += y
 		optimizer.zero_grad()
 		if cuda:
 			x = x.cuda()
@@ -119,42 +133,10 @@ for epoch in range(epochs):
 		loss.backward()
 		batch_losses.append(loss.item())
 		optimizer.step()
+		yhats.append(np.argmax(yhat.detach().cpu().numpy()[0]))
 	train_losses.append(batch_losses)
 	print(f'Epoch - {epoch} Train-Loss : {np.mean(train_losses[-1])}')
 	model.eval()
 	batch_losses = []
-	#trace_y = []
-	#trace_yhat = []
-
-
-'''
-for epoch in range(epochs):
-	model.train()
-	x, y = train_data, train_labels
-	optimizer.zero_grad()
-	print(type(train_data[0]), type(train_labels[0]))
-	x = x.to(device, dtype=torch.float32)
-	y = y.to(device, dtype=torch.long)
-	yhat = model(x)
-	loss = loss_fn(y_hat, y)
-	loss.backward()
-	train_losses.append(loss.item())
-	optimizer.step()
-	acc = accuracy(getPredictedValues(yhat), y)
-	print(f"Epoch {epoch} Training Loss {loss.item()} Training Accuracy {acc}")
-'''
-
-def getPredictedValues(yhat):
-	preds = []
-	for item in yhat:
-		ind = np.argmax(item)
-		new = np.zeros([50])
-		new[ind] = 1
-		preds.append(new)
-
-def accuracy(preds, labels):
-	correct = 0.0
-	for i in range(len(preds)):
-		if preds[i] == labels[i]:
-			correct += 1.0
-	return (0.0 + correct) / len(preds)
+	preds = getPredictedValues(yhats)
+	print(f"Accuracy {accuracy(preds, ylabs)}")

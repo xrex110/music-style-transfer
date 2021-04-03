@@ -29,30 +29,6 @@ class MusicCNN(nn.Module):
         out = self.lRelu(self.conv1(x_inp))
         return out
 
-'''
-class ESCModel(nn.Module):
-    def __init__(self):
-        super(ESCModel, self).__init__()
-        self.conv1 = nn.Conv1d(257, 2048, kernel_size=2, stride=1)
-        self.maxpool = nn.MaxPool1d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv1d(2048, 64, kernel_size=2, stride=1)
-        self.maxpool = nn.MaxPool1d(kernel_size=2, stride=2, padding=1)
-
-        self.linear = nn.Linear(13696, 50)
-
-        self.lRelu = nn.LeakyReLU()
-
-    def forward(self, inp):
-        print(inp.shape)
-        out1 = self.lRelu(self.conv1(inp))
-        out1 = nn.functional.max_pool1d(out1, 2)
-        out2 = self.lRelu(self.conv2(out1))
-        out2 = nn.functional.max_pool1d(out2, 2)
-        print(out2.shape)
-        out = self.linear(out2)
-        print("Reached")
-        return out
-'''
 
 class ESCModel(nn.Module):
 
@@ -71,7 +47,8 @@ class ESCModel(nn.Module):
         num_features_before_fcnn = functools.reduce(operator.mul, list(self.feature_extractor(torch.rand(1, *in_shape)).shape))
 
         self.classifier = nn.Sequential(
-            nn.Linear(num_features_before_fcnn, 50)
+            nn.Linear(num_features_before_fcnn, 50),
+            nn.Sigmoid()
         )
 
     def forward(self, x):
