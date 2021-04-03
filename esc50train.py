@@ -20,7 +20,9 @@ if not LOADED:
 		print(f"list: {idx_list}")
 		print(f"filenmame: {files[i]}")
 		print(f"\tlabel is {idx_list[1]}")
-		labels.append(int(idx_list[1]))
+		vect = np.zeros([50])
+		vect[int(idx_list[1])] = 1.0
+		labels.append(vect)
 
 	audio_data = []
 	for i in range(0, 2000):
@@ -50,6 +52,7 @@ optimizer = optim.Adam(model.parameters(), lr = 2e-5)
 loss_fn = nn.CrossEntropyLoss()
 
 epochs = 60
+train_losses=[]
 
 for epoch in range(epochs):
 	model.train()
@@ -58,4 +61,11 @@ for epoch in range(epochs):
 	print(type(train_data[0]), type(train_labels[0]))
 	x = x.to(device, dtype=torch.float32)
 	y = y.to(device, dtype=torch.long)
+	yhat = model(x)
+	loss = loss_fn(y_hat, y)
+	loss.backward()
+	train_losses.append(loss.item())
+	optimizer.step()
+	print(f"Epoch {epoch} Training Loss {loss.item()}")
 
+	
