@@ -43,16 +43,16 @@ num_epochs = 20000
 a_content, sr = fileToSpectrum(content_wav, sr_content)
 a_style, sr = fileToSpectrum(paced_style_wav, sr_style)
 
-a_content_torch = torch.from_numpy(a_content)[None, :, :]
+a_content_torch = torch.from_numpy(a_content)[None, None, :, :]
 if cuda:
     a_content_torch = a_content_torch.cuda()
 print(f"Shape on content file is : {a_content_torch.shape}")
-a_style_torch = torch.from_numpy(a_style)[ None, :, :]
+a_style_torch = torch.from_numpy(a_style)[None, None, :, :]
 if cuda:
     a_style_torch = a_style_torch.cuda()
 print(f"Shape on style file is : {a_style_torch.shape}")
 
-model = ESCModel()
+model = ESCModel3()
 model.load_state_dict(torch.load("esc50-model.pt")) #Load weights
 print(f"Model used:")
 model.eval()
@@ -91,7 +91,7 @@ start = time.time()
 # Train the Model
 for epoch in range(1, num_epochs + 1):
     optimizer.zero_grad()
-    a_G = model(a_G_var)
+    a_G = model.feature_extractor(a_G_var)
 
     content_loss = content_param * compute_content_loss(a_C, a_G)
     style_loss = style_param * compute_layer_style_loss(a_S, a_G)

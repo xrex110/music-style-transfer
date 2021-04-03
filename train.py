@@ -58,14 +58,20 @@ if cuda:
     a_C_var = a_C_var.cuda()
     a_S_var = a_S_var.cuda()
 
+print("1", a_C_var.shape)
+print("1", a_S_var.shape)
+
 a_C = model(a_C_var)
 a_S = model(a_S_var)
 
 a_G_var = Variable(torch.randn(a_content_torch.shape) * 1e-3)
+print("SHAPE:", a_G_var.shape)
 if cuda:
     a_G_var = a_G_var.cuda()
 a_G_var.requires_grad = True
 optimizer = torch.optim.Adam([a_G_var])
+
+print("a_G_var:", a_G_var.shape)
 
 
 # Keep track of losses for plotting
