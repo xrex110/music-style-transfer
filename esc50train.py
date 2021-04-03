@@ -72,10 +72,13 @@ if not LOADED_LABELS:
 		print(f"filenmame: {files[i]}")
 		print(f"\tlabel is {idx_list[1]}")
 
-		labels.append(int(idx_list[1]))
+		label_num = int(idx_list[1])
 
-	train_labels = labels[0:1800]
-	test_labels = labels[1801:2000]
+		if label_num < 32:
+			labels.append(label_num)
+
+	train_labels = labels[0:1152]
+	test_labels = labels[1153:1280]
 
 	train_labels_T = torch.LongTensor(train_labels)
 	test_labels_T = torch.LongTensor(test_labels)
@@ -89,12 +92,16 @@ if not LOADED_AUDIO:
 	print("Building Audio Files")
 	audio_data = []
 	for i in range(0, 2000):
-		audio, sr = wav2spectrum("../ESC-50/audio/" + files[i])
-		print(f"Loaded {files[i]}")
-		audio_data.append(audio)
+		idx_list = re.split("[0-9]\-[0-9]+\-[A-Z]\-|\.wav", files[i])
+		label_num = int(idx_list[1])
+
+		if label_num < 32:
+			audio, sr = wav2spectrum("../ESC-50/audio/" + files[i])
+			audio_data.append(audio)
+			print(f"Loaded {files[i]}")
 	
-	train_data = audio_data[0:1800]
-	test_data = audio_data[1801:2000]
+	train_data = audio_data[0:1152]
+	test_data = audio_data[1153:1280]
 
 	train_data_T = torch.Tensor(train_data)
 	test_data_T = torch.Tensor(test_data)
