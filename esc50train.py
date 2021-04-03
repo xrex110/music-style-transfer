@@ -39,7 +39,7 @@ LOGGING_INTERVAL = 1
 #BATCH_SIZE = 32
 BATCH_SIZE = 1
 
-epochs = 60
+epochs = 30
 
 model = ESCModel()
 if cuda:
@@ -47,15 +47,16 @@ if cuda:
 optimizer = optim.Adam(model.parameters(), lr = 2e-5)
 lossfx = nn.CrossEntropyLoss()
 
-if os.path.exists("loaded_labels.p"):
-	if os.path.getsize("loaded_labels.p") > 0:
+if os.path.exists("train_labels.p"):
+	if os.path.getsize("train_labels.p") > 0:
 		train_labels_T = pickle.load(open("train_labels.p", "rb"))
 		test_labels_T = pickle.load(open("test_labels.p", "rb"))
 		LOADED_LABELS = True
 		pass
 
-if os.path.exists("loaded_spectograms.p"):
-	if os.path.getsize("loaded_spectograms.p") > 0:
+if os.path.exists("train_spectograms.p"):
+	if os.path.getsize("train_spectograms.p") > 0:
+		print("HERE")
 		train_data_T = pickle.load(open("train_spectograms.p", "rb"))
 		test_data_T = pickle.load(open("test_spectograms.p", "rb"))
 		LOADED_AUDIO = True
