@@ -26,3 +26,20 @@ class MusicCNN(nn.Module):
     def forward(self, x_inp):
         out = self.lRelu(self.conv1(x_inp))
         return out
+
+class ESCModel(nn.Module):
+    def __init__(self):
+        super(ESCModel, self).__init__()
+        self.conv1 = nn.Conv1d(1, 2048, kernel_size=2, stride=2)
+        self.conv2 = nn.Conv1d(2048, 64, kernel_size=2, stride=2)
+        self.linear = nn.Linear(64, 50)  #Paper uses 32 ???
+
+        self.lRelu = nn.LeakyReLU()
+
+    def forward(self, inp):
+        out1 = self.lRelu(self.conv1(inp))
+        out2 = self.lRelu(self.conv2(out1))
+
+        out = self.linear(out2)
+
+        return out

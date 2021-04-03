@@ -10,6 +10,8 @@ if torch.cuda.is_available():
 else:
     cuda = False
 
+print(f"Using gpu: {cuda}")
+
 #Params
 content_file = "input_stairway.wav"
 style_file = "input_nightcall.wav"
@@ -86,7 +88,6 @@ for epoch in range(1, num_epochs + 1):
         gen_audio_C = "out" + str(epoch) + ".wav"
         spectrum2wav(gen_spectrum, sr, gen_audio_C)    
     
-
     # print
     print("\t{} {}% {} content_loss:{:4f} style_loss:{:4f} total_loss:{:4f}".format(epoch,
                                                                                     epoch / num_epochs * 100,

@@ -7,9 +7,9 @@ import librosa
 import pyrubberband as rb
 from utils import changeOutputTempo, wav2spectrum, spectrum2wav
 
-nightcall, sr1 = wav2spectrum("input_nightcall.wav")
-stairway, sr2 = wav2spectrum("input_stairway.wav")
+nightcall, sr1 = librosa.load("input_nightcall.wav")
+stairway, sr2 = librosa.load("input_stairway.wav")
 
 song = changeOutputTempo(nightcall, stairway, sr1)
 
-spectrum2wav(song, sr1, "song.wav")
+soundfile.write("song.wav", song, sr1)
