@@ -65,8 +65,8 @@ if cuda:
     a_C_var = a_C_var.cuda()
     a_S_var = a_S_var.cuda()
 
-a_C = model(a_C_var)
-a_S = model(a_S_var)
+a_C = model.feature_extractor(a_C_var)
+a_S = model.feature_extractor(a_S_var)
 
 a_G_var = Variable(torch.randn(a_content_torch.shape) * 1e-3)
 if cuda:
@@ -92,12 +92,11 @@ start = time.time()
 for epoch in range(1, num_epochs + 1):
     optimizer.zero_grad()
     a_G = model.feature_extractor(a_G_var)
-    print(a_G.shape)
-
+    
     content_loss = content_param * compute_content_loss(a_C, a_G)
     style_loss = style_param * compute_layer_style_loss(a_S, a_G)
     loss = content_loss + style_loss
-    loss.backward()
+    loss.backward(retain_graph=True)
     optimizer.step()
 
     if epoch % PRINTING_INTERVAL == 0:

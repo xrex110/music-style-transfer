@@ -36,10 +36,10 @@ LOADED_LABELS = False
 LOADED_AUDIO = False
 LOGGING_INTERVAL = 1
 
-#BATCH_SIZE = 32
-BATCH_SIZE = 1
+BATCH_SIZE = 16
+#BATCH_SIZE = 1
 
-epochs = 3
+epochs = 2
 
 model = ESCModel3()
 if cuda:
@@ -136,12 +136,13 @@ for epoch in range(epochs):
 			x = x.cuda()
 			y = y.cuda()
 
-		yhat = model(x[None, :, :, :])
+		yhat = model(x[:, None, :, :])
 		loss = lossfx(yhat, y)
 		loss.backward()
 		batch_losses.append(loss.item())
 		optimizer.step()
 		yhats.append(np.argmax(yhat.detach().cpu().numpy()[0]))
+		print(f"Batch number {index}")
 	train_losses.append(batch_losses)
 	print(f'Epoch - {epoch} Train-Loss : {np.mean(train_losses[-1])}')
 	model.eval()
