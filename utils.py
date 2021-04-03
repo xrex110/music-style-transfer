@@ -2,7 +2,9 @@ import librosa
 import numpy as np
 import torch
 from models import *
-import soundfile 
+import soundfile
+import librosa
+import pyrubberband as rb
 
 def wav2spectrum(fname):
     x, sr = librosa.load(fname)
@@ -96,3 +98,9 @@ def compute_layer_style_loss(a_S, a_G):
     J_style_layer = 1.0 / (4 * (n_C ** 2) * (n_H * n_W)) * torch.sum((GS - GG) ** 2)
 
     return J_style_layer
+
+def changeOutputTempo(song, targetSong, sr):
+    estimatedTempo = librosa.beat.tempo(song, sr)
+    outputTempo = librosa.beat.tempo(targetSong, sr)
+    song = rb.change_tempo(song, sr, estimatedTempo, final_tempo)
+    return song
