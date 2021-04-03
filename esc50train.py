@@ -8,27 +8,35 @@ from models import ESCModel
 from utils import *
 import pickle
 
-#files = os.listdir("../ESC-50/audio")
+LOADED = False
 
-#labels = []
-#for i in range(0, 2000):
-#    idx_list = re.split("[0-9]\-[0-9]+\-[A-E]\-|\.wav", files[i])
-    
-#    print(f"label is {idx_list[1]}")
-#    labels.append(int(idx_list[1]))
+if not LOADED:
 
-#audio_data = []
-#for i in range(0, 2000):
-#    audio, sr = wav2spectrum(files[i])
-#    print(f"Loaded {files[i]}")
-#    audio_data.append(audio)
+	files = os.listdir("../ESC-50/audio")
 
-#print(f"type: {type(audio)}")
+	labels = []
+	for i in range(0, 2000):
+	    idx_list = re.split("[0-9]\-[0-9]+\-[A-E]\-|\.wav", files[i])
+	    
+	    print(f"label is {idx_list[1]}")
+	    labels.append(int(idx_list[1]))
 
-#pickle.dump(labels, open("loaded_labels.p", "wb"))
+	audio_data = []
+	for i in range(0, 2000):
+	    audio, sr = wav2spectrum(files[i])
+	    print(f"Loaded {files[i]}")
+	    audio_data.append(audio)
 
-audio = pickle.load(open("loaded_spectograms.p", "wb"))
-labels = pickle.load(open("loaded_labels.p", "wb"))
+	print(f"type: {type(audio)}")
+
+	pickle.dump(labels, open("loaded_labels.p", "wb"))
+	pickle.dump(audio_data, open("loaded_spectograms.p", "wb"))
+
+else:
+	with open("loaded_spectograms.p", "rb") as file:
+		audio = pickle.load(file)
+	with open("loaded_labels.p", "rb") as file:
+		labels = pickle.load(file)
 
 train_data = audio[0:1800]
 train_labels = labels[0:1800]
@@ -44,6 +52,9 @@ epochs = 60
 
 for epoch in range(epochs):
     model.train()
-    
-
+    x, y = train_data, train_labels
+    optimizer.zero_grad()
+    print(type(train_data[0]), type(train_labels[0]))
+    x = x.to(device, dtype=torch.float32)
+    y = y.to(device, dtype=torch.long)
 
