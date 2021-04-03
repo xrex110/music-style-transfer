@@ -22,7 +22,8 @@ print("Cuda", str(cuda))
 LOADED = False
 LOGGING_INTERVAL = 1
 
-BATCH_SIZE = 32
+#BATCH_SIZE = 32
+BATCH_SIZE = 1
 
 epochs = 60
 
@@ -40,13 +41,18 @@ if not LOADED:
 	labels = []
 	for i in range(0, 2000):
 		idx_list = re.split("[0-9]\-[0-9]+\-[A-Z]\-|\.wav", files[i])
-		#print(f"list: {idx_list}")
-		#print(f"filenmame: {files[i]}")
-		#print(f"\tlabel is {idx_list[1]}")
+		print(f"list: {idx_list}")
+		print(f"filenmame: {files[i]}")
+		print(f"\tlabel is {idx_list[1]}")
+		'''
 		vect = np.zeros([50])
 		vect[int(idx_list[1])] = 1.0
 		labels.append(vect)
+		'''
+		labels.append(int(idx_list[1]))
 
+	pickle.dump(labels, open("loaded_labels.p", "wb"))
+	'''
 	audio_data = []
 	for i in range(0, 2000):
 		audio, sr = wav2spectrum("../ESC-50/audio/" + files[i])
@@ -55,24 +61,25 @@ if not LOADED:
 
 	#print(f"type: {type(audio)}")
 
-	pickle.dump(labels, open("loaded_labels.p", "wb"))
-	pickle.dump(audio_data, open("loaded_spectograms.p", "wb"))
+	pickle.dump(audio_data, open("loaded_spectograms.p", "wb"))'''
 
 	#print("Files Built")
 
 else:
 	print("Loading Data Files")
 	with open("loaded_spectograms.p", "rb") as file:
-		audio = pickle.load(file)
+		audio_data = pickle.load(file)
 	with open("loaded_labels.p", "rb") as file:
 		labels = pickle.load(file)
 	print("Files Loaded")
 
 print("Building Datasets")
-train_data = audio[0:1800]
+train_data = audio_data[0:1800]
 train_labels = labels[0:1800]
 
-test_data = audio[1801:2000]
+print(train_labels[0])
+
+test_data = audio_data[1801:2000]
 test_labels = labels[1801:2000]
 
 model = ESCModel()
@@ -84,9 +91,9 @@ lossfx = nn.CrossEntropyLoss()
 train_losses=[]
 
 train_data_T = torch.Tensor(train_data)
-train_labels_T = torch.Tensor(train_labels)
+train_labels_T = torch.LongTensor(train_labels)
 test_data_T = torch.Tensor(test_data)
-test_labels_T = torch.Tensor(test_labels)
+test_labels_T = torch.LongTensor(test_labels)
 
 trainDataset = TensorDataset(train_data_T, train_labels_T)
 testDataset = TensorDataset(test_data_T, test_labels_T)
