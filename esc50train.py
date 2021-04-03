@@ -34,14 +34,15 @@ if os.path.exists("loaded_labels.p") and os.path.exists("loaded_spectograms.p"):
 
 if not LOADED:
 
+	print("Building Data Files")
 	files = os.listdir("../ESC-50/audio")
 
 	labels = []
 	for i in range(0, 2000):
 		idx_list = re.split("[0-9]\-[0-9]+\-[A-Z]\-|\.wav", files[i])
-		print(f"list: {idx_list}")
-		print(f"filenmame: {files[i]}")
-		print(f"\tlabel is {idx_list[1]}")
+		#print(f"list: {idx_list}")
+		#print(f"filenmame: {files[i]}")
+		#print(f"\tlabel is {idx_list[1]}")
 		vect = np.zeros([50])
 		vect[int(idx_list[1])] = 1.0
 		labels.append(vect)
@@ -49,20 +50,25 @@ if not LOADED:
 	audio_data = []
 	for i in range(0, 2000):
 		audio, sr = wav2spectrum("../ESC-50/audio/" + files[i])
-		print(f"Loaded {files[i]}")
+		#print(f"Loaded {files[i]}")
 		audio_data.append(audio)
 
-	print(f"type: {type(audio)}")
+	#print(f"type: {type(audio)}")
 
 	pickle.dump(labels, open("loaded_labels.p", "wb"))
 	pickle.dump(audio_data, open("loaded_spectograms.p", "wb"))
 
+	#print("Files Built")
+
 else:
+	print("Loading Data Files")
 	with open("loaded_spectograms.p", "rb") as file:
 		audio = pickle.load(file)
 	with open("loaded_labels.p", "rb") as file:
 		labels = pickle.load(file)
+	print("Files Loaded")
 
+print("Building Datasets")
 train_data = audio[0:1800]
 train_labels = labels[0:1800]
 
@@ -87,6 +93,8 @@ testDataset = TensorDataset(test_data_T, test_labels_T)
 
 train_loader = DataLoader(trainDataset, batch_size = BATCH_SIZE)
 test_loader = DataLoader(testDataset, batch_size = BATCH_SIZE)
+
+print("Datasets Built. Begining Training")
 
 for epoch in range(epochs):
 	model.train()
