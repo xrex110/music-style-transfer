@@ -47,7 +47,7 @@ class ESCModel(nn.Module):
         num_features_before_fcnn = functools.reduce(operator.mul, list(self.feature_extractor(torch.rand(1, *in_shape)).shape))
 
         self.classifier = nn.Sequential(
-            nn.Linear(num_features_before_fcnn, 50),
+            nn.Linear(num_features_before_fcnn, 32),    # Used to be 50
             nn.Sigmoid()
         )
 
